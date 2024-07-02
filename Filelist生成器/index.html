@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="app_icon.ico" type="image/x-icon">
+    <title>文件清單生成器</title>
+    <style>
+        /* 主要樣式設定區塊 */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #f4f4f4;
+        }
+
+        .container {
+            background: #2c2c2c;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            display: flex; /* 使用 flexbox 來控制排列 */
+            flex-direction: column; /* 垂直排列內容 */
+        }
+
+        .info {
+            background-color: #3c3c3c;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: left; /* 左對齊文本 */
+            color: #a0a0a0;
+        }
+
+        h2 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a0a0a0;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            background-color: #3c3c3c;
+            color: #f4f4f4;
+            text-align: center;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .arrow {
+            cursor: pointer;
+            padding: 0 10px;
+            font-size: 24px;
+            color: #a0a0a0;
+            transition: color 0.3s, transform 0.2s; /* 添加 transform 的過渡效果 */
+        }
+
+        .arrow:hover {
+            color: #fff;
+        }
+
+        .arrow:active {
+            transform: scale(1.2); /* 按下時放大1.2倍 */
+        }
+
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button.active {
+            background-color: #0056b3;
+        }
+
+        textarea {
+            width: 100%;
+            height: 360px; /* 設置高度為 360 像素 */
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #3c3c3c;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-family: monospace;
+            resize: vertical; /* 允許垂直調整大小 */
+            background-color: #3c3c3c;
+            color: #f4f4f4;
+        }
+
+        .ffmpeg-command {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Filelist Genorator V1.3</h2>
+
+        <!-- 說明文本 -->
+        <div class="info">
+            <p>使用說明：</p>
+            <p>1. 在自訂字串格式輸入框中，使用 <code>@</code> 符號表示數字位置。</p>
+            <p>2. 輸入起始數字和結束數字，生成對應的文件列表。</p>
+            <p>3. 點擊「複製」按鈕將生成的文件列表複製到剪貼板。</p>
+            <p>4. 點擊「下載」按鈕將生成的文件列表下載為 <code>filelist.txt</code> 文件。</p>
+            <p>5. 點擊「清除」按鈕清空所有輸入和生成的文件列表。</p>
+        </div>
+
+        <!-- 自訂字串格式輸入區塊 -->
+        <div class="form-group">
+            <label for="customFormat">自訂字串格式 (用 @ 表示數字位置):</label>
+            <input type="text" id="customFormat" placeholder="video@.ts" oninput="generateFileList()">
+        </div>
+
+        <!-- 數字輸入區塊 -->
+        <div class="form-group">
+            <label for="start">起始數字:</label>
+            <div class="input-container">
+                <span class="arrow" onclick="adjustNumber('start', -1)">&#9664;</span>
+                <input type="number" id="start" placeholder="0" oninput="generateFileList()">
+                <span class="arrow" onclick="adjustNumber('start', 1)">&#9654;</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="end">結束數字:</label>
+            <div class="input-container">
+                <span class="arrow" onclick="adjustNumber('end', -1)">&#9664;</span>
+                <input type="number" id="end" oninput="generateFileList()">
+                <span class="arrow" onclick="adjustNumber('end', 1)">&#9654;</span>
+            </div>
+        </div>
+
+        <!-- 按鈕功能區塊 -->
+        <div class="form-group">
+            <button id="copyButton" onclick="copyToClipboard()">複製</button>
+            <button id="downloadButton" onclick="downloadFile()">下載</button>
+            <button id="clearButton" onclick="clearText()">清除</button>
+        </div>
+
+        <!-- 結果輸出區塊 -->
+        <textarea id="result" rows="10" readonly></textarea>
+        <div class="ffmpeg-command">ffmpeg -f concat -safe 0 -i filelist.txt -c copy output.mp4</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
